@@ -1,220 +1,195 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+# STOCK INVENTORY MONITORING SYSTEM
+# MJ Middle Eastern Halal Restaurant
+#
+# Type 0 or exit at any prompt to go back.
 
-# C extensions
-*.so
+# Predetermined accounts
+manager_accounts = {"manager": "manager123"}
+staff_accounts = {"staff1": "staff123", "staff2": "staff456"}
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Inventory is saved using the lowercase item name
+inventory = {}
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# Predefined items: number -> [name, unit, minimum]
+# Number 1 is always "Add New Item"
+item_list = {
+    "2": ["Chicken", "kg", 20],
+    "3": ["Beef", "kg", 20],
+    "4": ["Rice", "kg", 10],
+    "5": ["Cooking Oil", "L", 4],
+    "6": ["Garlic", "kg", 2],
+    "7": ["Onion", "kg", 2],
+    "8": ["Flour", "kg", 10],
+    "9": ["Potatoes", "kg", 5]
+}
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-*.lcov
-.hypothesis/
-.pytest_cache/
-cover/
+# ---------- Helper functions ----------
+def pause():
+    input("\nPress Enter to continue...")
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+def is_exit(text):
+    if text.lower() == "0" or text.lower() == "exit":
+        return True
+    return False
 
-# Flask stuff:
-instance/
-.webassets-cache
 
-# Scrapy stuff:
-.scrapy
+def yes_no(message):
+    # Returns "Y", "N" or "EXIT"
+    while True:
+        answer = input(message).strip().upper()
+        if answer == "Y":
+            return "Y"
+        elif answer == "N":
+            return "N"
+        elif is_exit(answer):
+            return "EXIT"
+        else:
+            print("Wrong choice. Please enter Y or N.")
 
-# Sphinx documentation
-docs/_build/
 
-# PyBuilder
-.pybuilder/
-target/
+def valid_number(value):
+    try:
+        number = float(value)
+        if number > 0:
+            return True
+        return False
+    except:
+        return False
 
-# Jupyter Notebook
-.ipynb_checkpoints
 
-# IPython
-profile_default/
-ipython_config.py
+def ask_quantity(message):
+    # Returns the quantity, or 0 if the user exits
+    while True:
+        value = input(message).strip()
+        if is_exit(value):
+            return 0
+        if valid_number(value):
+            return float(value)
+        print("Invalid quantity. Enter a number greater than 0.")
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
+def show_qty(number):
+    # Show 5.0 as 5
+    if number == int(number):
+        return str(int(number))
+    return str(number)
 
-# uv
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
+def show_item(item):
+    print("- " + item["name"] + ": " + show_qty(item["quantity"]) + " " + item["unit"])
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
 
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi/*
-!.pixi/config.toml
+def show_all_items():
+    for key in inventory:
+        show_item(inventory[key])
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
 
-# Celery stuff
-celerybeat-schedule*
-celerybeat.pid
+def is_low(item):
+    # Low stock when quantity is at or below the minimum
+    if item["minimum"] > 0 and item["quantity"] <= item["minimum"]:
+        return True
+    return False
 
-# Redis
-*.rdb
-*.aof
-*.pid
 
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
+def get_low_stock_names():
+    # Returns a list of the names of items that are low on stock
+    names = []
+    for key in inventory:
+        if is_low(inventory[key]):
+            names.append(inventory[key]["name"])
+    return names
 
-# ActiveMQ
-activemq-data/
 
-# SageMath parsed files
-*.sage.py
+def find_slot(name):
+    # Find the number of an item in the predefined list
+    for number in item_list:
+        if item_list[number][0].lower() == name.lower():
+            return number
+    return ""
 
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+def next_free_slot():
+    # First free number starting at 2
+    number = 2
+    while str(number) in item_list:
+        number = number + 1
+    return str(number)
 
-# Rope project settings
-.ropeproject
 
-# mkdocs/Zensical documentation
-/site
+# ---------- Search ----------
+def search_item():
+    if len(inventory) == 0:
+        print("\nNo inventory items yet.")
+        pause()
+        return
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+    while True:
+        print("\n--- SEARCH INVENTORY ---")
+        term = input("Enter item name to search: ").strip().lower()
+        if is_exit(term):
+            return
 
-# Pyre type checker
-.pyre/
+        found = False
+        for key in inventory:
+            if term in key:
+                if not found:
+                    print("\nItem found:")
+                found = True
+                show_item(inventory[key])
 
-# pytype static type analyzer
-.pytype/
+        if not found:
+            print("Item not found.")
 
-# Cython debug symbols
-cython_debug/
+        answer = yes_no("Search another item? (Y/N): ")
+        if answer != "Y":
+            return
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
 
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
+# ---------- Add inventory ----------
+def add_inventory():
+    while True:
+        print("\n--- ADD INVENTORY ITEM ---")
+        print("1. Add New Item")
+        for number in range(2, 100):
+            if str(number) in item_list:
+                print(str(number) + ". " + item_list[str(number)][0])
+        print("0. Exit")
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore that
-#   can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, you
-#   could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
+        choice = input("Enter choice: ").strip()
+        if is_exit(choice):
+            return
 
-# Ruff stuff:
-.ruff_cache/
+        new_item = False
 
-# PyPI configuration file
-.pypirc
+        if choice == "1":
+            name = input("Enter item name: ").strip().lower()
+            if is_exit(name):
+                return
+            if name == "":
+                print("Item name cannot be empty.")
+                continue
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+            slot = find_slot(name)
+            if slot != "":
+                # Name is already in the predefined list
+                name = item_list[slot][0]
+                unit = item_list[slot][1]
+                minimum = item_list[slot][2]
+            elif name in inventory:
+                unit = inventory[name]["unit"]
+                minimum = 0
+            else:
+                unit = input("Enter unit (kg, L, pcs): ").strip()
+                if is_exit(unit):
+                    return
+                if unit == "":
+                    print("Unit cannot be empty.")
+                    continue
+                minimum = 0
+                new_item = True
 
-# Streamlit
-.streamlit/secrets.toml
+        elif choice in item_list:
+            name = item_list[choice][0]
+            unit = ite
