@@ -1,0 +1,195 @@
+# STOCK INVENTORY MONITORING SYSTEM
+# MJ Middle Eastern Halal Restaurant
+#
+# Type 0 or exit at any prompt to go back.
+
+# Predetermined accounts
+manager_accounts = {"manager": "manager123"}
+staff_accounts = {"staff1": "staff123", "staff2": "staff456"}
+
+# Inventory is saved using the lowercase item name
+inventory = {}
+
+# Predefined items: number -> [name, unit, minimum]
+# Number 1 is always "Add New Item"
+item_list = {
+    "2": ["Chicken", "kg", 20],
+    "3": ["Beef", "kg", 20],
+    "4": ["Rice", "kg", 10],
+    "5": ["Cooking Oil", "L", 4],
+    "6": ["Garlic", "kg", 2],
+    "7": ["Onion", "kg", 2],
+    "8": ["Flour", "kg", 10],
+    "9": ["Potatoes", "kg", 5]
+}
+
+
+# ---------- Helper functions ----------
+def pause():
+    input("\nPress Enter to continue...")
+
+
+def is_exit(text):
+    if text.lower() == "0" or text.lower() == "exit":
+        return True
+    return False
+
+
+def yes_no(message):
+    # Returns "Y", "N" or "EXIT"
+    while True:
+        answer = input(message).strip().upper()
+        if answer == "Y":
+            return "Y"
+        elif answer == "N":
+            return "N"
+        elif is_exit(answer):
+            return "EXIT"
+        else:
+            print("Wrong choice. Please enter Y or N.")
+
+
+def valid_number(value):
+    try:
+        number = float(value)
+        if number > 0:
+            return True
+        return False
+    except:
+        return False
+
+
+def ask_quantity(message):
+    # Returns the quantity, or 0 if the user exits
+    while True:
+        value = input(message).strip()
+        if is_exit(value):
+            return 0
+        if valid_number(value):
+            return float(value)
+        print("Invalid quantity. Enter a number greater than 0.")
+
+
+def show_qty(number):
+    # Show 5.0 as 5
+    if number == int(number):
+        return str(int(number))
+    return str(number)
+
+
+def show_item(item):
+    print("- " + item["name"] + ": " + show_qty(item["quantity"]) + " " + item["unit"])
+
+
+def show_all_items():
+    for key in inventory:
+        show_item(inventory[key])
+
+
+def is_low(item):
+    # Low stock when quantity is at or below the minimum
+    if item["minimum"] > 0 and item["quantity"] <= item["minimum"]:
+        return True
+    return False
+
+
+def get_low_stock_names():
+    # Returns a list of the names of items that are low on stock
+    names = []
+    for key in inventory:
+        if is_low(inventory[key]):
+            names.append(inventory[key]["name"])
+    return names
+
+
+def find_slot(name):
+    # Find the number of an item in the predefined list
+    for number in item_list:
+        if item_list[number][0].lower() == name.lower():
+            return number
+    return ""
+
+
+def next_free_slot():
+    # First free number starting at 2
+    number = 2
+    while str(number) in item_list:
+        number = number + 1
+    return str(number)
+
+
+# ---------- Search ----------
+def search_item():
+    if len(inventory) == 0:
+        print("\nNo inventory items yet.")
+        pause()
+        return
+
+    while True:
+        print("\n--- SEARCH INVENTORY ---")
+        term = input("Enter item name to search: ").strip().lower()
+        if is_exit(term):
+            return
+
+        found = False
+        for key in inventory:
+            if term in key:
+                if not found:
+                    print("\nItem found:")
+                found = True
+                show_item(inventory[key])
+
+        if not found:
+            print("Item not found.")
+
+        answer = yes_no("Search another item? (Y/N): ")
+        if answer != "Y":
+            return
+
+
+# ---------- Add inventory ----------
+def add_inventory():
+    while True:
+        print("\n--- ADD INVENTORY ITEM ---")
+        print("1. Add New Item")
+        for number in range(2, 100):
+            if str(number) in item_list:
+                print(str(number) + ". " + item_list[str(number)][0])
+        print("0. Exit")
+
+        choice = input("Enter choice: ").strip()
+        if is_exit(choice):
+            return
+
+        new_item = False
+
+        if choice == "1":
+            name = input("Enter item name: ").strip().lower()
+            if is_exit(name):
+                return
+            if name == "":
+                print("Item name cannot be empty.")
+                continue
+
+            slot = find_slot(name)
+            if slot != "":
+                # Name is already in the predefined list
+                name = item_list[slot][0]
+                unit = item_list[slot][1]
+                minimum = item_list[slot][2]
+            elif name in inventory:
+                unit = inventory[name]["unit"]
+                minimum = 0
+            else:
+                unit = input("Enter unit (kg, L, pcs): ").strip()
+                if is_exit(unit):
+                    return
+                if unit == "":
+                    print("Unit cannot be empty.")
+                    continue
+                minimum = 0
+                new_item = True
+
+        elif choice in item_list:
+            name = item_list[choice][0]
+            unit = ite
